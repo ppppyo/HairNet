@@ -4,27 +4,28 @@ import random
 from PIL import Image, ImageEnhance
 
 def augment_image(img):
-    """무작위로 한 가지 증강 적용"""
+    """무작위로 한 가지 증강 적용 + 최종적으로 256x256 리사이즈"""
     aug_type = random.choice(['flip', 'rotate', 'color', 'brightness', 'contrast'])
     if aug_type == 'flip':
-        return img.transpose(Image.FLIP_LEFT_RIGHT)
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
     elif aug_type == 'rotate':
         angle = random.uniform(-15, 15)
-        return img.rotate(angle, expand=True)
+        img = img.rotate(angle, expand=True)
     elif aug_type == 'color':
         enhancer = ImageEnhance.Color(img)
         factor = random.uniform(0.8, 1.2)
-        return enhancer.enhance(factor)
+        img = enhancer.enhance(factor)
     elif aug_type == 'brightness':
         enhancer = ImageEnhance.Brightness(img)
         factor = random.uniform(0.8, 1.2)
-        return enhancer.enhance(factor)
+        img = enhancer.enhance(factor)
     elif aug_type == 'contrast':
         enhancer = ImageEnhance.Contrast(img)
         factor = random.uniform(0.8, 1.2)
-        return enhancer.enhance(factor)
-    else:
-        return img
+        img = enhancer.enhance(factor)
+    
+    # 마지막에 강제 리사이즈
+    return img.resize((256, 256))
 
 def get_existing_indices(files, basename):
     """basename_숫자.jpg 형식에서 숫자 모음 리턴 (정수 리스트)"""
