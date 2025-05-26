@@ -1,0 +1,21 @@
+program: 
+  - python
+  - -m
+  - train.train_wandb
+method: random
+metric:
+  name: val_accuracy
+  goal: maximize
+parameters:
+  learning_rate:
+    values: [0.01, 0.001, 0.0003]
+  optimizer:
+    values: ["adam", "adamw", "sgd"]
+  batch_size:
+    values: [32, 64]
+  dropout:
+    values: [0.0, 0.3, 0.5]
+  weight_decay:
+    values: [0.0, 0.0001, 0.001]
+  use_scheduler:
+    values: [true, false]

@@ -5,14 +5,29 @@ import wandb
 
 from models.cnn_model import CNNModel
 from utils.dataset_loader import get_dataloaders
-from utils.config import config
+from utils.config import config as base_config
+
+import argparse
+import yaml
 
 from tqdm import tqdm
 
 def train():
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--resume", action="store_true")  # True만 받아도 되면 이렇게
+    parser.add_argument("--checkpoint_path", type=str, default="checkpoint.pth")
+    args = parser.parse_args()
+
+    # config 덮어쓰기
+    config = base_config.copy()
+    config["resume"] = args.resume
+    config["checkpoint_path"] = args.checkpoint_path
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"✅ Using device: {device}")
+    early_stop_counter = 0
+    patience = 5
 
     # ✅ 1. wandb 초기화
     if config.get("use_wandb", False):
@@ -30,13 +45,24 @@ def train():
         batch_size=wandb_config["batch_size"]
     )
 
+    print("📋 class_map (index to label):")
+    for label, idx in class_map.items():
+        print(f"  {idx}: {label}")
+
     model = CNNModel(num_classes=wandb_config["num_classes"]).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(
         model.parameters(),
         lr=wandb_config["learning_rate"],
-        weight_decay=wandb_config.get("weight_decay", 0.01)
+        weight_decay=wandb_config.get("weight_decay", 1e-4)
     )
+
+    # optimizer = {
+    # "adam": torch.optim.Adam,
+    # "adamw": torch.optim.AdamW,
+    # "sgd": torch.optim.SGD
+    # }[wandb_config.get("optimizer", "adam")](model.parameters(), lr=wandb_config["learning_rate"], weight_decay=wandb_config.get("weight_decay", 1e-4))
+
 
     scheduler = None
     if wandb_config.get("use_scheduler", False):
@@ -61,7 +87,8 @@ def train():
         model.train()
         total_loss = 0.0
 
-        train_bar = tqdm(enumerate(train_loader), total=len(train_loader), desc=f"Epoch {epoch+1}/{config['epochs']}", dynamic_ncols=True)
+        num_batches = 0
+        train_bar = tqdm(enumerate(train_loader), total=len(train_loader), desc=f"Epoch {epoch+1}/{wandb_config['epochs']}", dynamic_ncols=True)
 
         for batch_idx, (images, labels) in train_bar:
             images, labels = images.to(device), labels.to(device)
@@ -71,6 +98,8 @@ def train():
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
+
+            num_batches += 1
 
             train_bar.set_postfix(loss=f"{loss.item():.4f}", batch=batch_idx)
 
@@ -88,23 +117,51 @@ def train():
                 correct += (predicted == labels).sum().item()
         val_acc = 100 * correct / total
 
-        print(f"Epoch {epoch+1} Loss: {total_loss:.4f} | Validation Accuracy: {val_acc:.2f}%")
+        avg_loss = total_loss / num_batches
+
+        # ✅ train 정확도 계산
+        model.eval()
+        train_correct, train_total = 0, 0
+        with torch.no_grad():
+            for images, labels in train_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                _, predicted = torch.max(outputs, 1)
+                train_total += labels.size(0)
+                train_correct += (predicted == labels).sum().item()
+
+        train_acc = 100 * train_correct / train_total
+        print(f"Epoch {epoch+1} Loss: {avg_loss:.4f} | Train Accuracy: {train_acc:.2f}% | Validation Accuracy: {val_acc:.2f}%")
 
         # ✅ wandb 로깅
         if config.get("use_wandb", False):
             wandb.log({
                 "epoch": epoch + 1,
-                "loss": total_loss,
+                "loss": avg_loss,
+                "train_accuracy": train_acc,
                 "val_accuracy": val_acc
             })
 
         # ✅ 모델 저장
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), "best_model.pth")
+            early_stop_counter = 0  # 🎯 여기에 추가
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "class_names": class_map,
+                "optimizer_state_dict": optimizer.state_dict(),
+                "best_val_acc": best_val_acc
+            }, f"best_model_woman_perm_new.pth")
             print("✅ Best model saved!")
             # if config.get("use_wandb", False):
             #     wandb.save("best_model.pth")
+        # else:
+        #     early_stop_counter += 1  # 🎯 여기에 추가
+        # # ✅ early stopping 조건 검사
+        # if early_stop_counter >= patience:
+        #     print("🛑 Early stopping triggered!")
+        #     break
 
         checkpoint = {
             "epoch": epoch,
@@ -116,15 +173,38 @@ def train():
         # torch.save(checkpoint, f"checkpoint_epoch_{epoch+1}.pth")
 
         if epoch + 1 == wandb_config["epochs"]:
-            torch.save(model.state_dict(), "last_model.pth")    
+            torch.save({
+            "epoch": epoch,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "best_val_acc": best_val_acc
+        }, f"last_model_woman_perm_new{epoch+1}.pth")    
 
         if scheduler:
             scheduler.step()
+
+    # # ✅ test set 성능 평가
+    # model.eval()
+    # test_correct, test_total = 0, 0
+    # with torch.no_grad():
+    #     for images, labels in test_loader:
+    #         images, labels = images.to(device), labels.to(device)
+    #         outputs = model(images)
+    #         _, predicted = torch.max(outputs, 1)
+    #         test_total += labels.size(0)
+    #         test_correct += (predicted == labels).sum().item()
+
+    # test_acc = 100 * test_correct / test_total
+    # print(f"🧪 Test Accuracy: {test_acc:.2f}%")
+
+    # # wandb 로깅도 원하면 추가
+    # if config.get("use_wandb", False):
+    #     wandb.log({"test_accuracy": test_acc})
 
 
 if __name__ == "__main__":
     train()
 
     
-    if config.get("use_wandb", False):
-        wandb.finish()
+    # if config.get("use_wandb", False):
+    #     wandb.finish()
