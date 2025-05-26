@@ -14,8 +14,8 @@ def download_data():
     # 2. Create flat folder: data/dataset/man_data_flat/
     print("🔗 'augmented_700' 이미지들을 class 폴더로 정리 중...")
 
-    original_dir = os.path.join(clone_target, "dataset", "woman_data")
-    flat_dir = "data/woman_data"
+    original_dir = os.path.join(clone_target, "dataset", "man_data")
+    flat_dir = "data/man_data"
     os.makedirs(flat_dir, exist_ok=True)
 
     if not os.path.exists(original_dir):
