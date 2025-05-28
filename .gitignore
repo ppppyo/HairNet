@@ -4,7 +4,4 @@ __pycache__/
 wandb/
 logs/
 .env
-data/man_data/
-data/woman_data/
-dataset/
 best_model_woman.zip

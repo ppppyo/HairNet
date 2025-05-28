@@ -53,7 +53,7 @@ def main(root_dir):
         print(f"처리 중: {subdir_path}")
 
         # 증강 이미지 저장 폴더
-        augmented_dir = os.path.join(subdir_path, "augmented_700")
+        augmented_dir = os.path.join(subdir_path, "augmented_1000")
         if os.path.exists(augmented_dir):
             print(f"{augmented_dir} 이미 존재하므로 건너뜀")
             continue
@@ -76,18 +76,18 @@ def main(root_dir):
 
         for basename, img_files in grouped.items():
             original_count = len(img_files)
-            need = 700 - original_count
+            need = 1000 - original_count
             if need <= 0:
-                print(f"{basename}: 원본 이미지가 700개 이상입니다. 증강하지 않음.")
+                print(f"{basename}: 원본 이미지가 1000개 이상입니다. 증강하지 않음.")
                 continue
 
             # 원본 이미지 경로 리스트
             original_paths = [os.path.join(subdir_path, f) for f in img_files]
 
-            # 1~700까지 번호 매김용 리스트
+            # 1~1000까지 번호 매김용 리스트
             all_images = []
 
-            # 1. 원본 이미지를 augmented_700 폴더에 번호 붙여 복사
+            # 1. 원본 이미지를 augmented_1000 폴더에 번호 붙여 복사
             for i, img_path in enumerate(original_paths, start=1):
                 img = Image.open(img_path)
                 save_name = f"{basename}_{i}.jpg"
@@ -105,7 +105,7 @@ def main(root_dir):
                 aug_img.save(save_path)
                 all_images.append(save_path)
 
-            print(f"{basename}: 총 700개 이미지 생성 완료 (원본 {original_count} + 증강 {need})")
+            print(f"{basename}: 총 1000개 이미지 생성 완료 (원본 {original_count} + 증강 {need})")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
