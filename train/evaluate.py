@@ -7,9 +7,11 @@ def evaluate(model_path="best_model.pth"):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"✅ Using device: {device}")
+    
     # 모델 로드
     model = CNNModel(num_classes=config["num_classes"]).to(device)
-    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+    checkpoint = torch.load(model_path, map_location="cpu")
+    model.load_state_dict(checkpoint["model_state_dict"])   
     model.eval()
 
     # 데이터 로드
