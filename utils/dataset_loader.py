@@ -5,13 +5,13 @@ import os
 
 def get_dataloaders(data_dir, batch_size=32, image_size=256, val_ratio=0.1, test_ratio=0.1, seed=42):
     transform = transforms.Compose([
-        transforms.RandomResizedCrop(256, scale=(0.8, 1.0)),
+        transforms.RandomResizedCrop(image_size, scale=(0.8, 1.0)),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),
         transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
         transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
         transforms.ToTensor(),
-        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])  # 정규화 추가!
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]) 
     ])
 
     full_dataset = datasets.ImageFolder(root=data_dir, transform=transform)
