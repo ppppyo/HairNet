@@ -7,7 +7,9 @@ CNN 기반 헤어스타일 이미지 분류 프로젝트
 
 ```
 HairNet/
-├── data/                # 데이터셋 다운로드 경로 (Git 추적 제외됨)
+├── best_model/          # 가장 좋은 성능의 model
+├── data/                # 데이터셋 다운로드
+├── dataset/             # 데이터셋 (사용할 데이터는 dataset/*_data/*/augmented_1000
 ├── models/              # CNN 모델 정의
 ├── train/               # 학습 및 평가 스크립트
 ├── utils/               # 데이터로더 및 설정 관리
@@ -33,7 +35,7 @@ python data/download_dataset.py
 ```
 ## 모델 학습
 ```
-python -m train.train
+python -m train.train_wandb
 ```
 기능:
 - .pth 모델 저장 (best_model.pth, last_model.pth)
@@ -43,17 +45,7 @@ python -m train.train
 
 ### 구성 및 설정 변경
 utils/config.py에서 제어 가능
-```
-config = {
-    "learning_rate": 0.001,
-    "batch_size": 64,
-    "epochs": 30,
-    "num_classes": 17,
-    "data_path": "data/hairNet/dataset/man_data",
-    "use_wandb": True,
-    "resume": False
-}
-```
+
 ## WandB 실험 추적(optional)
 1. https://wandb.ai 가입 및 로그인
 2. CLI에서 로그인
@@ -67,6 +59,10 @@ python -m train.train_wandb
 ## 모델 평가
 ```
 python evaluate.py
+```
+## 모델 추론
+```
+python inference.py
 ```
 
 
