@@ -1,4 +1,0 @@
-✅ wandb initialized!
-Epoch 1/50: 100%|███████████████████████████████████████████████| 93/93 [05:42<00:00,  3.68s/it, batch=92, loss=2.6939]
-Epoch 1 Loss: 261.5942 | Validation Accuracy: 10.05%
-✅ Best model saved!
