@@ -9,23 +9,23 @@ def download_data():
     if not os.path.exists(clone_target):
         subprocess.run(["git", "clone", repo_url, clone_target], check=True)
     else:
-        print("✅ 이미 다운로드된 데이터입니다.")
+        print("이미 다운로드된 데이터입니다.")
 
     # 2. Create flat folder: data/dataset/man_data_flat/
-    print("🔗 'augmented_700' 이미지들을 class 폴더로 정리 중...")
+    print("'augmented_1000' 이미지들을 class 폴더로 정리 중...")
 
-    original_dir = os.path.join(clone_target, "dataset", "man_data")
-    flat_dir = "data/man_data"
+    original_dir = os.path.join(clone_target, "dataset", "woman_data")
+    flat_dir = "data/woman_data"
     os.makedirs(flat_dir, exist_ok=True)
 
     if not os.path.exists(original_dir):
-        print(f"❌ 원본 경로가 존재하지 않습니다: {original_dir}")
+        print(f"원본 경로가 존재하지 않습니다: {original_dir}")
         return
 
     for class_name in os.listdir(original_dir):
-        aug_dir = os.path.join(original_dir, class_name, "augmented_700")
+        aug_dir = os.path.join(original_dir, class_name, "augmented_1000")
         if not os.path.isdir(aug_dir):
-            print(f"⚠️ 건너뜀: {aug_dir} 은 폴더가 아님")
+            print(f"건너뜀: {aug_dir} 은 폴더가 아님")
             continue
 
         # 타겟 클래스 폴더 생성
@@ -40,9 +40,9 @@ def download_data():
                 if not os.path.exists(dst):
                     os.symlink(src, dst)  # Windows에서는 작동안할 수 있음
             except Exception as e:
-                print(f"🚨 링크 실패: {src} → {dst} / 이유: {e}")
+                print(f"링크 실패: {src} → {dst} / 이유: {e}")
 
-    print(f"✅ 완료: {flat_dir} 에 학습용 폴더 구성됨!")
+    print(f"완료: {flat_dir} 에 학습용 폴더 구성됨!")
 
 if __name__ == "__main__":
     download_data()
