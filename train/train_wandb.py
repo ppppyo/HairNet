@@ -50,13 +50,13 @@ def train():
         print(f"  {idx}: {label}")
 
     model = CNNModel(num_classes=wandb_config["num_classes"]).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
+    optimizer = optim.AdamW(
         model.parameters(),
         lr=wandb_config["learning_rate"],
         weight_decay=wandb_config.get("weight_decay", 1e-4)
     )
-
+    # # hyparams 실험 시
     # optimizer = {
     # "adam": torch.optim.Adam,
     # "adamw": torch.optim.AdamW,
@@ -66,11 +66,18 @@ def train():
 
     scheduler = None
     if wandb_config.get("use_scheduler", False):
-        scheduler = optim.lr_scheduler.StepLR(
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
-            step_size=wandb_config.get("scheduler_step", 10),
-            gamma=wandb_config.get("scheduler_gamma", 0.5)
+            T_max=wandb_config.get("scheduler_T_max", 50),  # 한 주기 길이 (에폭 기준)
+            eta_min=wandb_config.get("scheduler_eta_min", 1e-6)  # 최저 학습률
         )
+    # # hyparams 실험 시
+    # if wandb_config.get("use_scheduler", False):
+    #     scheduler = optim.lr_scheduler.StepLR(
+    #         optimizer,
+    #         step_size=wandb_config.get("scheduler_step", 10),
+    #         gamma=wandb_config.get("scheduler_gamma", 0.5)
+    #     )
 
     start_epoch = 0
     best_val_acc = 0.0
@@ -119,56 +126,58 @@ def train():
 
         avg_loss = total_loss / num_batches
 
-        # ✅ train 정확도 계산
-        model.eval()
-        train_correct, train_total = 0, 0
-        with torch.no_grad():
-            for images, labels in train_loader:
-                images, labels = images.to(device), labels.to(device)
-                outputs = model(images)
-                _, predicted = torch.max(outputs, 1)
-                train_total += labels.size(0)
-                train_correct += (predicted == labels).sum().item()
+        # # train 정확도 계산
+        # model.eval()
+        # train_correct, train_total = 0, 0
+        # with torch.no_grad():
+        #     for images, labels in train_loader:
+        #         images, labels = images.to(device), labels.to(device)
+        #         outputs = model(images)
+        #         _, predicted = torch.max(outputs, 1)
+        #         train_total += labels.size(0)
+        #         train_correct += (predicted == labels).sum().item()
 
-        train_acc = 100 * train_correct / train_total
-        print(f"Epoch {epoch+1} Loss: {avg_loss:.4f} | Train Accuracy: {train_acc:.2f}% | Validation Accuracy: {val_acc:.2f}%")
+        # train_acc = 100 * train_correct / train_total
+        print(f"Epoch {epoch+1} Loss: {avg_loss:.4f} | Validation Accuracy: {val_acc:.2f}%")
 
         # ✅ wandb 로깅
         if config.get("use_wandb", False):
             wandb.log({
                 "epoch": epoch + 1,
                 "loss": avg_loss,
-                "train_accuracy": train_acc,
                 "val_accuracy": val_acc
             })
 
         # ✅ 모델 저장
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            early_stop_counter = 0  # 🎯 여기에 추가
+            early_stop_counter = 0  
             torch.save({
                 "epoch": epoch,
                 "model_state_dict": model.state_dict(),
                 "class_names": class_map,
                 "optimizer_state_dict": optimizer.state_dict(),
                 "best_val_acc": best_val_acc
-            }, f"best_model_woman_perm_new.pth")
+            }, f"best_model_woman_all.pth")
             print("✅ Best model saved!")
-            # if config.get("use_wandb", False):
-            #     wandb.save("best_model.pth")
+
+        # # hyparams 실험 시
+        # if config.get("use_wandb", False):
+        #     wandb.save("best_model.pth")
         # else:
-        #     early_stop_counter += 1  # 🎯 여기에 추가
-        # # ✅ early stopping 조건 검사
+        #     early_stop_counter += 1 
+
+        # # early stopping 조건 검사
         # if early_stop_counter >= patience:
         #     print("🛑 Early stopping triggered!")
         #     break
 
-        checkpoint = {
-            "epoch": epoch,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "best_val_acc": best_val_acc
-        }
+        # checkpoint = {
+        #     "epoch": epoch,
+        #     "model_state_dict": model.state_dict(),
+        #     "optimizer_state_dict": optimizer.state_dict(),
+        #     "best_val_acc": best_val_acc
+        # }
 
         # torch.save(checkpoint, f"checkpoint_epoch_{epoch+1}.pth")
 
@@ -178,12 +187,12 @@ def train():
             "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "best_val_acc": best_val_acc
-        }, f"last_model_woman_perm_new{epoch+1}.pth")    
+        }, f"last_model_woman_all_0528_{epoch+1}.pth")
 
         if scheduler:
             scheduler.step()
 
-    # # ✅ test set 성능 평가
+    # # test set 성능 평가
     # model.eval()
     # test_correct, test_total = 0, 0
     # with torch.no_grad():
@@ -195,7 +204,7 @@ def train():
     #         test_correct += (predicted == labels).sum().item()
 
     # test_acc = 100 * test_correct / test_total
-    # print(f"🧪 Test Accuracy: {test_acc:.2f}%")
+    # print(f" Test Accuracy: {test_acc:.2f}%")
 
     # # wandb 로깅도 원하면 추가
     # if config.get("use_wandb", False):
@@ -205,6 +214,6 @@ def train():
 if __name__ == "__main__":
     train()
 
-    
+    # # hyparams 실험 시
     # if config.get("use_wandb", False):
     #     wandb.finish()
