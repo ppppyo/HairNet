@@ -1,7 +1,0 @@
-__pycache__/
-*.pyc
-*.pth
-wandb/
-logs/
-.env
-best_model_woman.zip
