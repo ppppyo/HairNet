@@ -29,9 +29,9 @@ def preprocess_image(image_path):
     image = Image.open(image_path).convert("RGB")
     return transform(image).unsqueeze(0)  # (1, C, H, W)
 
-def inference(image_path, model_path="female_perm.pth"):
+def inference(image_path, model_path="female_perm.pth"): # Change model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"✅ Using device: {device}")
+    print(f"Using device: {device}")
 
     model, class_names = load_model(model_path, device)
     input_tensor = preprocess_image(image_path).to(device)
@@ -43,7 +43,7 @@ def inference(image_path, model_path="female_perm.pth"):
         pred_class_idx = torch.argmax(probs, dim=1).item()
         prob = probs[0][pred_class_idx].item()
 
-    print(f"✅ 예측 클래스: {class_names[pred_class_idx]} (확률: {prob*100:.2f}%)")
+    print(f"예측 클래스: {class_names[pred_class_idx]} (확률: {prob*100:.2f}%)")
 
 if __name__ == "__main__":
     # 테스트할 이미지 경로 입력
