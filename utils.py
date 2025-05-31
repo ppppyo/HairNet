@@ -34,7 +34,7 @@ def preprocess_image(img, target_size=(256, 256), padding_ratio=1.0):
     boxes, probs = mtcnn.detect(img)
 
     if boxes is None:
-        # 얼굴 없으면 비율 유지하며 축소
+        # 얼굴 없으면 비율 유지하며 축소(뒷모습 등)
         img.thumbnail(target_size, Image.BILINEAR)
         new_img = Image.new('RGB', target_size, (0, 0, 0))
         new_w, new_h = img.size
@@ -44,7 +44,7 @@ def preprocess_image(img, target_size=(256, 256), padding_ratio=1.0):
         return transform(new_img).unsqueeze(0)
 
     if len(boxes) != 1:
-        return None # 얼굴이 여러 개면 None 반환
+        return None # 얼굴이 여러 개면 None 반환(Error handling)
 
     (x1, y1, x2, y2) = boxes[0]
     face_w = x2 - x1
@@ -59,10 +59,10 @@ def preprocess_image(img, target_size=(256, 256), padding_ratio=1.0):
     bottom = min(h, int(y2 + padding_h))
 
     img_cropped = img.crop((left, top, right, bottom))
-    img_resized = img_cropped.resize(target_size, Image.BILINEAR)
-    return transform(img_cropped).unsqueeze(0)
 
-matplotlib.rcParams['font.family'] = 'AppleGothic'  # macOS 예시
+    return transform(img_cropped).unsqueeze(0) # PIL -> Tensor 변환
+
+matplotlib.rcParams['font.family'] = 'AppleGothic'
 matplotlib.rcParams['axes.unicode_minus'] = False
 
 transform = transforms.Compose([
@@ -84,7 +84,7 @@ def inference(input_tensor, model_path, num_classes, CLASSES):
         pred_class_idx = torch.argmax(probs, dim=1).item()
         prob = probs[0][pred_class_idx].item()
         result=round(prob*100,2)
-        pred_class=CLASSES[pred_class_idx]   
+        pred_class=CLASSES[pred_class_idx]
     return pred_class, result
 
 if __name__ == "__main__":
