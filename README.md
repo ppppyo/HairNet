@@ -16,6 +16,8 @@ HairNet/
 ├── main.py              # 선택적 실행 스크립트
 ├── requirements.txt     # 필요 라이브러리
 ├── README.md            # 프로젝트 설명서
+├── app.py               # Streamlit
+├── utils.py             # Streamlit 전처리, 모델
 ```
 ## 설치 및 환경 준비
 1. Conda 환경 설정
