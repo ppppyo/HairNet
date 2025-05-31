@@ -3,3 +3,5 @@ torchvision
 gdown
 matplotlib
 scikit-learn
+streamlit
+Pillow
