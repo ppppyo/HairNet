@@ -1,4 +1,4 @@
-# hairNet
+# HairNet
 CNN 기반 헤어스타일 이미지 분류 프로젝트  
 (Pytorch + WandB + GitHub 기반 재현 가능한 실험 환경)
 
